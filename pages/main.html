@@ -1,0 +1,59 @@
+<html>
+<head>
+    <title>SCC Contract Requests</title>
+    {% include "styles.html" %}
+</head>
+<body>
+<div style="padding: 25px 25px 25px 25px;">
+    <h2>Contract Requests</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Contract Id(s)</th>
+                <th>Vendor</th>
+                <th>Contract Value</th>
+                <th>Effective/<br/>Expir Date</th>
+                <th>Requested</th>
+                <th>Received</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for request in requests %}
+        <tr>
+            <td style = "white-space: nowrap;">
+                <ul>
+                    {% if request.cID %}
+                        <li>cID: {{ request.cID }}</li>
+                    {% endif %}
+                    {% if request.aID %}
+                        <li>aID: {{ request.aID }}</li>
+                    {% endif %}
+                    {% if request.sID %}
+                        <li>sID: {{ request.sID }}</li>
+                    {% endif %}
+                </ul>
+            </td>
+            <td>{{ request.contract.vname }}</td>
+            <td style="white-space: nowrap;">{{ request.contract.amount }}</td>
+            <td>{{ request.contract.eff_date }}<br/>{{ request.contract.exp_date }}</td>
+            <td>{{ request.requested }}</td>
+            <td>{{ request.received }}</td>
+        </tr>
+        {% if request.docs %}
+        <tr>
+            <td>&nbsp;</td>
+            <td colspan="5">
+                <ul>
+                    {% for doc in request.docs %}
+                    <li><a href="{{ doc.url }}" target = "blank">{{ doc.url }}</a></li>
+                    {% endfor %}
+                </ul>
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
