@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+    <title>Contract Requests</title>
+    {% include "styles.html" %}
+</head>
+<body>
+<div style="padding: 25px 25px 25px 25px;">
+    <h2>Requests</h2>
+    <p></p>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Contract Id</th>
+            <th>Requested</th>
+            <th>Received</th>
+            <th>Vendor</th>
+            <th>URLs</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for req in reqs %}
+        <tr>
+            <td>
+                aId: {{ req[0].ariba_id }}<br/>
+                cId: {{ req[0].contract_id }}<br/>
+                sId: {{ req[0].sap_id }}
+            </td>
+            <td>{{ req[0].requested }}</td>
+            <td>{{ req[0].received }}</td>
+            <td>{{ req[0].vendor }}</td>
+            <td>
+                <ul>
+                    {% for info in req %}
+                    {% if info.url %}
+                    <li><a href="{{ info.url }}">{{ info.url_label }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body></html>
