@@ -18,6 +18,11 @@ def db_exec(engine, sql):
         return engine.execute(sql)
 
 
+def fetch_max_pk(table):
+    sql = f"select max(pk) as pk from {table}"
+    return db_exec(conn, sql)[0]['pk']
+
+
 def url_label(url):
     if url is None:
         return None
@@ -25,40 +30,116 @@ def url_label(url):
         return url.split('/')[-1]
 
 
-def contracts_req_main():
+def contracts_req_main(digest):
     context = dict()
+    context['digest'] = digest
+
     sql = """
-        select r1.ariba_id, r1.contract_id, r1.sap_id, r1.requested, r1.received, r2.vendor_pk, r2.url
-        from supporting_doc_requests r1 left outer join supporting_docs r2 on r1.pk = r2.request_pk
-        order by r1.requested desc
+        select s1.pk, s1.ariba_id, s1.contract_id, s1.sap_id, s1.requested, v1.name
+        from supporting_doc_requests s1, contracts c1, vendors v1
+        where (s1.ariba_id = c1.ariba_id or (ISNULL(s1.ariba_id) and ISNULL(c1.ariba_id))) and
+            (s1.contract_id = c1.contract_id or (ISNULL(s1.contract_id) and ISNULL(c1.contract_id))) and
+            (s1.sap_id = c1.sap_id or (ISNULL(s1.sap_id) and ISNULL(c1.sap_id))) and
+            c1.vendor_pk = v1.pk
     """
-    reqs = db_exec(conn, sql)
-    found = dict()
-    vendor_pks = list()
-    for req in reqs:
-        req['url_label'] = url_label(req['url'])
-        if req['vendor_pk']:
-            vendor_pks.append(req['vendor_pk'])
-        key = f"{req['ariba_id']}|{req['contract_id']}|{req['sap_id']}|{req['requested']}"
-        if key not in found:
-            found[key] = list()
-            found[key].append(req)
-        found[key].append({'url': req['url'], 'url_label': req['url_label']})
+    rows = dict()
+    for row in db_exec(conn, sql):
+        if row['pk'] not in rows:
+            rows[row['pk']] = row
 
-    vendor_pks_str = ', '.join(vendor_pks)
-    sql = f"select * from vendors where pk in ({vendor_pks_str})"
-    vendors = dict()
-    for v in db_exec(conn, sql):
-        vendors[str(v['pk'])] = v['name']
+    req_pks = ', '.join([ str(pk) for pk in list(rows.keys())])
+    sql = f"select * from supporting_docs where request_pk in ({req_pks})"
+    for doc in db_exec(conn, sql):
+        pk = doc['request_pk']
+        if pk in rows:
+            if 'urls' not in rows[pk]:
+                rows[pk]['urls'] = list()
+            url_entry = dict()
+            url_entry['url'] = doc['url']
+            url_entry['label'] = url_label(doc['url'])
+            rows[pk]['urls'].append(url_entry)
 
-    next_found = list()
-
-    for row in found:
-        if found[row][0]['vendor_pk']:
-            found[row][0]['vendor'] = vendors[found[row][0]['vendor_pk']]
-        next_found.append(found[row])
-
-    context['reqs'] = next_found
-    print(f"reqs: {next_found}")
-
+    context['reqs'] = rows.values()
     return context
+
+
+def contracts_add_form(digest):
+    context = dict()
+    context['digest'] = digest
+    context['reqs'] = db_exec(conn, "select * from supporting_doc_requests")
+    context['vendors'] = db_exec(conn, "select * from vendors order by name")
+    return context
+
+
+def contracts_req_add(form):
+    # print(f"request: {dict(request.form)}")
+
+    next_req_pk = fetch_max_pk('supporting_doc_requests') + 1
+
+    if form['a_id'] != '' or form['c_id'] != '' or form['s_id'] != '':
+        if form['req_date'] != 'None':
+            if request.form['a_id'] is None:
+                a_id = 'NULL'
+            else:
+                a_id = f"'{request.form['a_id']}'"
+            if request.form['c_id'] is None:
+                c_id = 'NULL'
+            else:
+                c_id = f"'{request.form['c_id']}'"
+            if request.form['s_id'] is None:
+                s_id = 'NULL'
+            else:
+                s_id = f"'{request.form['s_id']}'"
+            sql = f"""
+            insert into supporting_doc_requests
+            (pk, ariba_id, contract_id, sap_id, request_entity, requested)
+            values ({next_req_pk}, {a_id}, {c_id}, {s_id}, 'SCC Procurement', '{request.form['req_date']}')
+            """
+            print(f"sql: {sql}")
+            # db_exec(conn, sql)
+
+
+def contracts_doc_add(form):
+    next_doc_pk = fetch_max_pk('supporting_docs') + 1
+    print(f"form: {form}")
+    parts = list()
+    if form['a_id'] != '':
+        parts.append(f"ariba_id = '{form['a_id']}'")
+    if form['c_id'] != '':
+        parts.append(f"contracts_id = '{form['c_id']}'")
+    if form['s_id'] != '':
+        parts.append(f"sap_id = '{form['s_id']}'")
+    if form['req_date'] != '':
+        parts.append(f"requested = '{form['req_date']}'")
+    quals = ' and '.join(parts)
+    sql = f"select * from supporting_doc_requests where {quals}"
+    rows = db_exec(conn, sql)
+
+    req_pk = rows[0]['pk']
+
+    if form['url1'] != '':
+        sql = f"""
+            insert into supporting_docs values
+            ({next_doc_pk}, {req_pk}, '{form['url1']}', '{form['rec_date']}')
+        """
+        # print(f"sql: {sql}")
+        db_exec(conn, sql)
+        next_doc_pk += 1
+
+    if form['url2'] != '':
+        sql = f"""
+            insert into supporting_docs values
+            ({next_doc_pk}, {req_pk}, '{form['url2']}', '{form['rec_date']}')
+        """
+        # print(f"sql: {sql}")
+        db_exec(conn, sql)
+        next_doc_pk += 1
+
+    if form['url3'] != '':
+        sql = f"""
+            insert into supporting_docs values
+            ({next_doc_pk}, {req_pk}, '{form['url3']}', '{form['rec_date']}')
+        """
+        # print(f"sql: {sql}")
+        db_exec(conn, sql)
+        next_doc_pk += 1

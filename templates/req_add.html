@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+    <title>Contract Requests</title>
+    {% include "styles.html" %}
+</head>
+<body>
+<div style="padding: 25px 25px 25px 25px;">
+    <h2>Requests</h2>
+    <h3>New Request:</h3>
+    <blockquote>
+        <form method="post" action="/contracts_req/{{ digest }}/req_add">
+            <table>
+            <tr>
+                <th><label for="req_a_id">Ariba ID</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" name="a_id" id="req_a_id" /></td>
+            </tr>
+            <tr>
+                <th><label for="req_c_id">Contract ID</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" name="c_id" id="req_c_id" /></td>
+            </tr>
+            <tr>
+                <th><label for="req_s_id">SAP ID</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" name="s_id" id="req_s_id" /></td>
+            </tr>
+            <tr>
+                <th style="white-space: nowrap;"><label for="req_req_date">Requested<br/>(YYYY-MM-DD)</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" name="req_date" id="req_req_date" /></td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td><button type="submit">Submit</button></td>
+            </tr>
+            </table>
+        </form>
+    </blockquote>
+    <h3>New Supporting Doc</h3>
+    <blockquote>
+        <form method="post" action="/contracts_req/{{ digest }}/doc_add">
+            <table>
+            <tr>
+                <th>For Request:</th>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+                <th><label for="doc_a_id">Ariba ID</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" name="a_id" id="doc_a_id" /></td>
+            </tr>
+            <tr>
+                <th><label for="doc_c_id">Contract ID</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" name="c_id" id="doc_c_id" /></td>
+            </tr>
+            <tr>
+                <th><label for="doc_s_id">SAP ID</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" name="s_id" id="doc_s_id" /></td>
+            </tr>
+            <tr>
+                <th style="white-space: nowrap;"><label for="doc_req_date">Requested<br/>(YYYY-MM-DD)</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" name="req_date" id="doc_req_date" /></td>
+            </tr>
+            <tr>
+                <th style="white-space: nowrap;"><label for="doc_rec_date">Received<br/>(YYYY-MM-DD)</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" name="rec_date" id="doc_rec_date" /></td>
+            </tr>
+            <tr>
+                <th><label for="doc_url1">URL</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" size="120" name="url1" id="doc_url1" /></td>
+            </tr>
+            <tr>
+                <th><label for="doc_url2">URL</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" size="120" name="url2" id="doc_url2" /></td>
+            </tr>
+            <tr>
+                <th><label for="doc_url3">URL</label>:&nbsp;&nbsp;&nbsp;</th>
+                <td><input type="text" size="120" name="url3" id="doc_url3" /></td>
+            </tr>
+            <tr>
+                <td>&nbsp;</td>
+                <td><button type="submit">Submit</button></td>
+            </tr>
+            </table>
+        </form>
+    </blockquote>
+</div>
+</body></html>
