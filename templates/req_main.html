@@ -3,12 +3,27 @@
 <head>
     <title>Contract Requests</title>
     {% include "styles.html" %}
+    {% include "datatable.html" %}
+    <script>
+        $(document).ready(function () {
+            $('#requests').DataTable({
+               "paging": false,
+               "columns": [
+                    {"name": "Contract Id", "orderable": false},
+                    {"name": "Requested"},
+                    {"name": "Vendor"},
+                    {"name": "URLs", "orderable": false}
+                ]
+            });
+        });
+    </script>
+    </script>
 </head>
 <body>
 <div style="padding: 25px 25px 25px 25px;">
     <h2>Requests</h2>
     <p><a href="/contracts_req/{{ digest }}/add">Add</a></p>
-    <table class="table table-striped">
+    <table class="table table-striped" id="requests">
         <thead>
         <tr>
             <th>Contract Id</th>

@@ -22,8 +22,8 @@ def auth(digest):
     pass
 
 
-@contracts_req.route(f"/{cfg['WWW']}/<digest>")
-@contracts_req.route(f"/{cfg['WWW']}/<digest>/")
+@contracts_req.route(f"/{cfg['WWW']}<digest>")
+@contracts_req.route(f"/{cfg['WWW']}<digest>/")
 def req_main(digest):
     auth(digest)
     main = env.get_template('req_main.html')
@@ -31,7 +31,7 @@ def req_main(digest):
     return main.render(**context)
 
 
-@contracts_req.route(f"/{cfg['WWW']}/<digest>/add")
+@contracts_req.route(f"/{cfg['WWW']}<digest>/add")
 def req_add_form(digest):
     auth(digest)
     main = env.get_template('req_add.html')
@@ -40,14 +40,14 @@ def req_add_form(digest):
     return main.render(**context)
 
 
-@contracts_req.route(f"/{cfg['WWW']}/<digest>/req_add", methods=['POST'])
+@contracts_req.route(f"/{cfg['WWW']}<digest>/req_add", methods=['POST'])
 def req_add(digest):
     auth(digest)
     data.contracts_req_add(request.form)
     return redirect(f"/contracts_req/{digest}/add")
 
 
-@contracts_req.route(f"/{cfg['WWW']}/<digest>/doc_add", methods=['POST'])
+@contracts_req.route(f"/{cfg['WWW']}<digest>/doc_add", methods=['POST'])
 def doc_add(digest):
     auth(digest)
     data.contracts_doc_add(request.form)
@@ -56,4 +56,3 @@ def doc_add(digest):
 
 if __name__ == '__main__':
     contracts_req.run(port=8080)
-
