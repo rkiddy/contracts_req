@@ -78,15 +78,15 @@ def contracts_req_add(form):
 
     if form['a_id'] != '' or form['c_id'] != '' or form['s_id'] != '':
         if form['req_date'] != 'None':
-            if request.form['a_id'] is None:
+            if request.form['a_id'] is None or request.form['a_id'] == '':
                 a_id = 'NULL'
             else:
                 a_id = f"'{request.form['a_id']}'"
-            if request.form['c_id'] is None:
+            if request.form['c_id'] is None or request.form['c_id'] == '':
                 c_id = 'NULL'
             else:
                 c_id = f"'{request.form['c_id']}'"
-            if request.form['s_id'] is None:
+            if request.form['s_id'] is None or request.form['s_id'] == '':
                 s_id = 'NULL'
             else:
                 s_id = f"'{request.form['s_id']}'"
@@ -96,7 +96,7 @@ def contracts_req_add(form):
             values ({next_req_pk}, {a_id}, {c_id}, {s_id}, 'SCC Procurement', '{request.form['req_date']}')
             """
             print(f"sql: {sql}")
-            # db_exec(conn, sql)
+            db_exec(conn, sql)
 
 
 def contracts_doc_add(form):
