@@ -16,42 +16,31 @@ application = contracts_req
 env = Environment(loader=PackageLoader('contracts_req'))
 
 
-def auth(digest):
-    if digest is None or digest != cfg['KEY']:
-        raise Exception("Application must be accessed with key.")
-    pass
-
-
-@contracts_req.route(f"/{cfg['WWW']}<digest>")
-@contracts_req.route(f"/{cfg['WWW']}<digest>/")
-def req_main(digest):
-    auth(digest)
+@contracts_req.route(f"/{cfg['WWW']}contracts_req")
+@contracts_req.route(f"/{cfg['WWW']}contracts_req/")
+def req_main():
     main = env.get_template('req_main.html')
-    context = data.contracts_req_main(digest)
+    context = data.contracts_req_main()
     return main.render(**context)
 
 
-@contracts_req.route(f"/{cfg['WWW']}<digest>/add")
-def req_add_form(digest):
-    auth(digest)
+@contracts_req.route(f"/{cfg['WWW']}contracts_req/add")
+def req_add_form():
     main = env.get_template('req_add.html')
-    context = data.contracts_add_form(digest)
-    context['digest'] = digest
+    context = data.contracts_add_form()
     return main.render(**context)
 
 
-@contracts_req.route(f"/{cfg['WWW']}<digest>/req_add", methods=['POST'])
-def req_add(digest):
-    auth(digest)
+@contracts_req.route(f"/{cfg['WWW']}contracts_req/req_add", methods=['POST'])
+def req_add():
     data.contracts_req_add(request.form)
-    return redirect(f"/contracts_req/{digest}/add")
+    return redirect(f"/contracts_req/add")
 
 
-@contracts_req.route(f"/{cfg['WWW']}<digest>/doc_add", methods=['POST'])
-def doc_add(digest):
-    auth(digest)
+@contracts_req.route(f"/{cfg['WWW']}contracts_req/doc_add", methods=['POST'])
+def doc_add():
     data.contracts_doc_add(request.form)
-    return redirect(f"/contracts_req/{digest}")
+    return redirect(f"/contracts_req/")
 
 
 if __name__ == '__main__':

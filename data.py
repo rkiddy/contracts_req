@@ -5,22 +5,28 @@ from sqlalchemy import create_engine, inspect
 
 cfg = dotenv_values(".env")
 
-con_engine = create_engine(f"mysql+pymysql://{cfg['USR']}:{cfg['PWD']}@{cfg['HOST']}/{cfg['DB']}")
-conn = con_engine.connect()
-inspector = inspect(con_engine)
+db = create_engine(f"mysql+pymysql://{cfg['USR']}:{cfg['PWD']}@{cfg['HOST']}:{cfg['PORT']}/{cfg['DB']}")
 
 
 def db_exec(engine, sql):
     # print(f"sql: {sql}")
     if sql.strip().startswith('select'):
-        return [dict(r) for r in engine.execute(sql).fetchall()]
+        return [dict(r) for r in db.execute(sql).fetchall()]
     else:
-        return engine.execute(sql)
+        return db.execute(sql)
+
+
+def fix(s):
+    if s == '' or s is None:
+        return "NULL"
+    else:
+        s2 = s.replace('%', '%%')
+        return f"'{s2}'"
 
 
 def fetch_max_pk(table):
     sql = f"select max(pk) as pk from {table}"
-    return db_exec(conn, sql)[0]['pk']
+    return db_exec(db, sql)[0]['pk']
 
 
 def url_label(url):
@@ -30,9 +36,8 @@ def url_label(url):
         return url.split('/')[-1]
 
 
-def contracts_req_main(digest):
+def contracts_req_main():
     context = dict()
-    context['digest'] = digest
 
     sql = """
         select s1.pk, s1.ariba_id, s1.contract_id, s1.sap_id, s1.requested, v1.name
@@ -43,13 +48,13 @@ def contracts_req_main(digest):
             c1.vendor_pk = v1.pk
     """
     rows = dict()
-    for row in db_exec(conn, sql):
+    for row in db_exec(db, sql):
         if row['pk'] not in rows:
             rows[row['pk']] = row
 
     req_pks = ', '.join([ str(pk) for pk in list(rows.keys())])
     sql = f"select * from supporting_docs where request_pk in ({req_pks})"
-    for doc in db_exec(conn, sql):
+    for doc in db_exec(db, sql):
         pk = doc['request_pk']
         if pk in rows:
             if 'urls' not in rows[pk]:
@@ -63,11 +68,10 @@ def contracts_req_main(digest):
     return context
 
 
-def contracts_add_form(digest):
+def contracts_add_form():
     context = dict()
-    context['digest'] = digest
-    context['reqs'] = db_exec(conn, "select * from supporting_doc_requests")
-    context['vendors'] = db_exec(conn, "select * from vendors order by name")
+    context['reqs'] = db_exec(db, "select * from supporting_doc_requests")
+    context['vendors'] = db_exec(db, "select * from vendors order by name")
     return context
 
 
@@ -78,25 +82,18 @@ def contracts_req_add(form):
 
     if form['a_id'] != '' or form['c_id'] != '' or form['s_id'] != '':
         if form['req_date'] != 'None':
-            if request.form['a_id'] is None or request.form['a_id'] == '':
-                a_id = 'NULL'
-            else:
-                a_id = f"'{request.form['a_id']}'"
-            if request.form['c_id'] is None or request.form['c_id'] == '':
-                c_id = 'NULL'
-            else:
-                c_id = f"'{request.form['c_id']}'"
-            if request.form['s_id'] is None or request.form['s_id'] == '':
-                s_id = 'NULL'
-            else:
-                s_id = f"'{request.form['s_id']}'"
+            a_id = fix(request.form['a_id'])
+            c_id = fix(request.form['c_id'])
+            s_id = fix(request.form['s_id'])
             sql = f"""
             insert into supporting_doc_requests
-            (pk, ariba_id, contract_id, sap_id, request_entity, requested)
-            values ({next_req_pk}, {a_id}, {c_id}, {s_id}, 'SCC Procurement', '{request.form['req_date']}')
+                (pk, ariba_id, contract_id, sap_id, request_entity, requested)
+                values ({next_req_pk}, {a_id}, {c_id}, {s_id},
+                       'SCC Procurement',
+                       {fix(request.form['req_date'])})
             """
             print(f"sql: {sql}")
-            db_exec(conn, sql)
+            db_exec(db, sql)
 
 
 def contracts_doc_add(form):
@@ -104,42 +101,43 @@ def contracts_doc_add(form):
     print(f"form: {form}")
     parts = list()
     if form['a_id'] != '':
-        parts.append(f"ariba_id = '{form['a_id']}'")
+        parts.append(f"ariba_id = {fix(form['a_id'])}")
     if form['c_id'] != '':
-        parts.append(f"contracts_id = '{form['c_id']}'")
+        parts.append(f"contract_id = {fix(form['c_id'])}")
     if form['s_id'] != '':
-        parts.append(f"sap_id = '{form['s_id']}'")
+        parts.append(f"sap_id = {fix(form['s_id'])}")
     if form['req_date'] != '':
-        parts.append(f"requested = '{form['req_date']}'")
+        parts.append(f"requested = {fix(form['req_date'])}")
     quals = ' and '.join(parts)
     sql = f"select * from supporting_doc_requests where {quals}"
-    rows = db_exec(conn, sql)
+    print(f"sql: {sql}")
+    rows = db_exec(db, sql)
 
     req_pk = rows[0]['pk']
 
     if form['url1'] != '':
         sql = f"""
             insert into supporting_docs values
-            ({next_doc_pk}, {req_pk}, '{form['url1']}', '{form['rec_date']}')
+            ({next_doc_pk}, {req_pk}, {fix(form['url1'])}, {fix(form['rec_date'])})
         """
         # print(f"sql: {sql}")
-        db_exec(conn, sql)
+        db_exec(db, sql)
         next_doc_pk += 1
 
     if form['url2'] != '':
         sql = f"""
             insert into supporting_docs values
-            ({next_doc_pk}, {req_pk}, '{form['url2']}', '{form['rec_date']}')
+            ({next_doc_pk}, {req_pk}, {fix(form['url2'])}, {fix(form['rec_date'])})
         """
         # print(f"sql: {sql}")
-        db_exec(conn, sql)
+        db_exec(db, sql)
         next_doc_pk += 1
 
     if form['url3'] != '':
         sql = f"""
             insert into supporting_docs values
-            ({next_doc_pk}, {req_pk}, '{form['url3']}', '{form['rec_date']}')
+            ({next_doc_pk}, {req_pk}, {fix(form['url3'])}, {fix(form['rec_date'])})
         """
         # print(f"sql: {sql}")
-        db_exec(conn, sql)
+        db_exec(db, sql)
         next_doc_pk += 1
